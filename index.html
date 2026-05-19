@@ -131,7 +131,9 @@
                 </div>
                 
                 <div id="success-message" class="success-msg hidden">
-                    O WhatsApp será aberto para você enviar sua confirmação!
+                    Reserva confirmada no sistema!<br><br>
+                    <strong>Se o WhatsApp não abrir automaticamente:</strong><br>
+                    <a id="btn-whats-manual" href="#" target="_blank" style="color: #ffeb3b; font-weight: bold; text-decoration: underline; display: inline-block; margin-top: 10px;">Clique aqui para enviar a mensagem</a>
                 </div>
             </div>
 
@@ -281,19 +283,21 @@
             const assentoNum = selectedSeat;
             const reserva = { nome: nome, rg: rg, email: email, telefone: telefone };
 
-            // Salva no Firebase
+            // TEXTO LIMPO: Sem emojis, sem asteriscos
+            const texto = encodeURIComponent(`Olá! Fiz minha reserva no ônibus do Colorado.\n\nPoltrona: ${assentoNum}\nNome: ${nome}\nRG: ${rg}`);
+            const linkWhats = `https://wa.me/${MEU_WHATSAPP}?text=${texto}`;
+            
+            // 1. Atualiza o botão manual de segurança (Fallback)
+            document.getElementById('btn-whats-manual').href = linkWhats;
+            
+            // 2. Tenta abrir o WhatsApp imediatamente ao clicar (Isso evita o bloqueador do PC)
+            window.open(linkWhats, '_blank');
+
+            // 3. Salva no Firebase simultaneamente
             db.ref('reservas/' + assentoNum).set(reserva).then(() => {
+                // Esconde o formulário e mostra a mensagem de sucesso com o link manual
                 document.getElementById('reservation-form-container').classList.add('hidden');
                 document.getElementById('success-message').classList.remove('hidden');
-                
-                // Código Unicode seguro para os emojis de bola vermelha e branca
-                const emojis = "\uD83D\uDD34\u26AA";
-                
-                // Texto limpo, sem asteriscos
-                const texto = encodeURIComponent(`${emojis} Olá! Fiz minha reserva no ônibus do Colorado.\n\nPoltrona: ${assentoNum}\nNome: ${nome}\nRG: ${rg}`);
-                
-                // CORREÇÃO PARA CELULAR: Usa window.location.href em vez de window.open
-                window.location.href = `https://wa.me/${MEU_WHATSAPP}?text=${texto}`;
                 
                 // Limpa campos
                 document.getElementById('nome').value = '';
