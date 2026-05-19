@@ -287,8 +287,7 @@
                 document.getElementById('success-message').classList.remove('hidden');
                 
                 // Abre o WhatsApp com mensagem pré-pronta
-                const texto = encodeURIComponent(`🔴⚪ Olá! Fiz minha reserva no ônibus do Colorado.\n\n*Poltrona:* ${assentoNum}\n*Nome:* ${nome}\n*RG:* ${rg}`);
-                window.open(`https://wa.me/${MEU_WHATSAPP}?text=${texto}`, '_blank');
+                const texto = "%F0%9F%94%B4%E2%9A%AA" + encodeURIComponent(` Olá! Fiz minha reserva no ônibus do Colorado.\n\n*Poltrona:* ${assentoNum}\n*Nome:* ${nome}\n*RG:* ${rg}`);
                 
                 // Limpa campos
                 document.getElementById('nome').value = '';
