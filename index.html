@@ -4,8 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reserva de Ônibus - Torcida</title>
+    <!-- Adicionando as bibliotecas do Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
     <style>
-        /* Estética baseada na tabela de ingressos (Vermelho e Branco) */
+        /* Estética em Vermelho e Branco */
         body {
             background: linear-gradient(135deg, #e60000 0%, #800000 100%);
             color: #ffffff;
@@ -18,157 +22,61 @@
         }
 
         .container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 40px;
-            max-width: 1000px;
-            width: 100%;
+            display: flex; flex-wrap: wrap; gap: 40px; max-width: 1000px; width: 100%;
         }
 
         .info-panel {
-            flex: 1;
-            min-width: 300px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            flex: 1; min-width: 300px; background: rgba(255, 255, 255, 0.1);
+            padding: 20px; border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
-        h1, h2, h3 {
-            text-transform: uppercase;
-            text-align: center;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
-            padding-bottom: 10px;
-        }
+        h1, h2, h3 { text-transform: uppercase; text-align: center; border-bottom: 2px solid rgba(255, 255, 255, 0.3); padding-bottom: 10px; }
 
-        /* Layout do Ônibus */
+        /* Layout do Ônibus - 42 lugares */
         .bus-layout {
-            background: rgba(0, 0, 0, 0.2);
-            border: 2px solid #ffffff;
-            border-radius: 30px;
-            padding: 30px 20px;
-            display: grid;
-            grid-template-columns: 1fr 1fr 0.5fr 1fr 1fr;
-            gap: 10px;
-            margin-top: 20px;
-            position: relative;
+            background: rgba(0, 0, 0, 0.2); border: 2px solid #ffffff; border-radius: 30px;
+            padding: 30px 20px; display: grid; grid-template-columns: 1fr 1fr 0.5fr 1fr 1fr;
+            gap: 10px; margin-top: 20px; position: relative;
         }
 
         .driver-area {
-            grid-column: 1 / span 5;
-            height: 40px;
-            border-bottom: 2px dashed rgba(255,255,255,0.5);
-            margin-bottom: 20px;
-            text-align: right;
-            padding-right: 20px;
-            font-size: 0.8em;
-            color: #ccc;
+            grid-column: 1 / span 5; height: 40px; border-bottom: 2px dashed rgba(255,255,255,0.5);
+            margin-bottom: 20px; text-align: right; padding-right: 20px; font-size: 0.8em; color: #ccc;
         }
 
         .seat {
-            background-color: #ffffff;
-            color: #cc0000;
-            padding: 10px 0;
-            text-align: center;
-            border-radius: 5px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 2px solid transparent;
+            background-color: #ffffff; color: #cc0000; padding: 10px 0; text-align: center;
+            border-radius: 5px; font-weight: bold; cursor: pointer; transition: all 0.2s; border: 2px solid transparent;
         }
 
-        .seat:hover:not(.occupied) {
-            transform: scale(1.1);
-            background-color: #ffcccc;
-        }
+        .seat:hover:not(.occupied) { transform: scale(1.1); background-color: #ffcccc; }
 
-        .seat.occupied {
-            background-color: #333333;
-            color: #999999;
-            cursor: not-allowed;
-            border: 2px solid #111;
-        }
+        .seat.occupied { background-color: #333333; color: #999999; cursor: not-allowed; border: 2px solid #111; }
 
-        .seat.selected {
-            background-color: #ffeb3b;
-            color: #000;
-            border: 2px solid #fff;
-            transform: scale(1.1);
-        }
+        .seat.selected { background-color: #ffeb3b; color: #000; border: 2px solid #fff; transform: scale(1.1); }
 
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; }
         
         input {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            box-sizing: border-box;
-            background: rgba(255,255,255,0.9);
-            color: #333;
+            width: 100%; padding: 10px; border: none; border-radius: 5px; box-sizing: border-box;
+            background: rgba(255,255,255,0.9); color: #333;
         }
 
         button {
-            width: 100%;
-            padding: 15px;
-            background-color: #ffffff;
-            color: #cc0000;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            text-transform: uppercase;
-            transition: 0.3s;
+            width: 100%; padding: 15px; background-color: #ffffff; color: #cc0000;
+            border: none; border-radius: 5px; font-size: 16px; font-weight: bold;
+            cursor: pointer; text-transform: uppercase; transition: 0.3s;
         }
 
         button:hover { background-color: #ffcccc; }
 
-        .btn-delete {
-            background-color: #ff4444;
-            color: white;
-            padding: 5px 10px;
-            font-size: 12px;
-            border-radius: 3px;
-            width: auto;
-            margin-left: 10px;
-        }
-
-        .btn-delete:hover { background-color: #cc0000; }
-
+        .btn-delete { background-color: #ff4444; color: white; padding: 5px 10px; font-size: 12px; border-radius: 3px; width: auto; margin-left: 10px; }
         .hidden { display: none; }
-        
-        .success-msg {
-            background-color: #4CAF50;
-            color: white;
-            padding: 15px;
-            border-radius: 5px;
-            text-align: center;
-            margin-top: 15px;
-        }
-
-        .admin-toggle {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: transparent;
-            border: 1px solid white;
-            color: white;
-            padding: 5px 10px;
-            width: auto;
-            font-size: 12px;
-        }
-
-        .meta-aviso {
-            background-color: rgba(0,0,0,0.5);
-            padding: 15px;
-            border-radius: 5px;
-            text-align: center;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
+        .success-msg { background-color: #4CAF50; color: white; padding: 15px; border-radius: 5px; text-align: center; margin-top: 15px; }
+        .admin-toggle { position: absolute; top: 10px; right: 10px; background: transparent; border: 1px solid white; color: white; padding: 5px 10px; font-size: 12px; }
+        .meta-aviso { background-color: rgba(0,0,0,0.5); padding: 15px; border-radius: 5px; text-align: center; font-weight: bold; margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -191,8 +99,8 @@
             <div id="user-panel">
                 <h1>Próxima Viagem</h1>
                 <p><strong>Destino:</strong> Estádio Beira-Rio</p>
-                <p><strong>Data:</strong> <span id="display-date"></span></p>
-                <p><strong>Saída:</strong> <span id="display-time"></span></p>
+                <p><strong>Data:</strong> <span id="display-date">Carregando...</span></p>
+                <p><strong>Saída:</strong> <span id="display-time">Carregando...</span></p>
 
                 <div id="reservation-form-container" class="hidden">
                     <hr style="border-color: rgba(255,255,255,0.2); margin: 20px 0;">
@@ -214,11 +122,11 @@
                         <label for="telefone">Telefone (WhatsApp):</label>
                         <input type="text" id="telefone" required>
                     </div>
-                    <button onclick="confirmarReserva()">Confirmar Reserva e Enviar E-mail</button>
+                    <button onclick="confirmarReserva()">Confirmar Reserva e Abrir WhatsApp</button>
                 </div>
                 
                 <div id="success-message" class="success-msg hidden">
-                    O aplicativo de e-mail do seu celular será aberto para o envio dos dados!
+                    O WhatsApp será aberto para você enviar sua confirmação!
                 </div>
             </div>
 
@@ -247,42 +155,60 @@
                 <ul id="lista-passageiros" style="list-style: none; padding: 0; max-height: 400px; overflow-y: auto;">
                     <!-- Preenchido via JS -->
                 </ul>
-                <button onclick="limparTudo()" style="background: #550000; font-size: 12px; padding: 10px; margin-top: 15px;">Resetar todos os dados salvos localmente</button>
             </div>
         </div>
     </div>
 
     <script>
+        // =================================================================
+        // 1. INSIRA SEUS DADOS AQUI!
+        // =================================================================
+        
+        // Coloque aqui o número do SEU WhatsApp que vai receber as mensagens
+        // Deve ter o 55 (Brasil), o DDD, e o número. Apenas números!
+        const MEU_WHATSAPP = "55054991845772"; 
+
+        // Copie as informações do firebaseConfig gerado lá no Passo 1 e cole aqui:
+        const firebaseConfig = {
+    apiKey: "AIzaSyBRD5uK4VDaeGYFvopumn-Uut15szzoxN4",
+    authDomain: "reserva-onibus-colorado-5bc36.firebaseapp.com",
+    projectId: "reserva-onibus-colorado-5bc36",
+    storageBucket: "reserva-onibus-colorado-5bc36.firebasestorage.app",
+    messagingSenderId: "530727428028",
+    appId: "1:530727428028:web:72828233a39708edc995b9"
+  };
+        
+        // =================================================================
+
+        // Inicializa o Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
         const totalSeats = 42;
         const metaPassageiros = 37;
         let selectedSeat = null;
+        let passengersData = {};
         
-        /* 
-           ATENÇÃO ADMIN: Para bloquear uma poltrona permanentemente para todos os torcedores, 
-           adicione o número dela dentro dos colchetes abaixo, separados por vírgula, 
-           diretamente lá no arquivo do GitHub! 
-           Exemplo: [1, 2] 
-        */
-        const assentosBloqueadosNoGitHub = [1, 2];
-
-        let occupiedSeats = JSON.parse(localStorage.getItem('occupiedSeats')) || assentosBloqueadosNoGitHub;
-        let passengersData = JSON.parse(localStorage.getItem('passengersData')) || {};
-        let infoViagem = JSON.parse(localStorage.getItem('infoViagem')) || { data: "10/01/2026", horario: "14:00" };
-
-        function salvarDados() {
-            localStorage.setItem('occupiedSeats', JSON.stringify(occupiedSeats));
-            localStorage.setItem('passengersData', JSON.stringify(passengersData));
-            localStorage.setItem('infoViagem', JSON.stringify(infoViagem));
-        }
-
+        // Monitora o Banco de Dados em Tempo Real
         function initApp() {
-            document.getElementById('display-date').textContent = infoViagem.data;
-            document.getElementById('display-time').textContent = infoViagem.horario;
-            document.getElementById('admin-date').value = infoViagem.data;
-            document.getElementById('admin-time').value = infoViagem.horario;
-            initBus();
+            // Monitora os assentos ocupados
+            db.ref('reservas').on('value', (snapshot) => {
+                passengersData = snapshot.val() || {};
+                initBus(); // Recarrega o ônibus sempre que alguém reservar
+                if (isAdmin) atualizarListaAdmin();
+            });
+
+            // Monitora informações da viagem
+            db.ref('infoViagem').on('value', (snapshot) => {
+                const info = snapshot.val() || { data: "Definir", horario: "Definir" };
+                document.getElementById('display-date').textContent = info.data;
+                document.getElementById('display-time').textContent = info.horario;
+                document.getElementById('admin-date').value = info.data;
+                document.getElementById('admin-time').value = info.horario;
+            });
         }
 
+        // Desenha o mapa do ônibus (42 lugares)
         function initBus() {
             const busDiv = document.getElementById('bus');
             busDiv.innerHTML = '<div class="driver-area">Motorista</div>';
@@ -302,11 +228,9 @@
                         seat.textContent = seatNumber < 10 ? '0'+seatNumber : seatNumber;
                         seat.dataset.number = seatNumber;
 
-                        if (occupiedSeats.includes(seatNumber)) {
+                        // Se o assento estiver no banco de dados, fica bloqueado
+                        if (passengersData[seatNumber]) {
                             seat.classList.add('occupied');
-                            if(!passengersData[seatNumber]) {
-                                passengersData[seatNumber] = { nome: "Poltrona Bloqueada", rg: "-", email: "-", telefone: "-" };
-                            }
                         } else {
                             seat.onclick = () => selectSeat(seat);
                         }
@@ -316,7 +240,6 @@
                     }
                 }
             }
-            atualizarListaAdmin();
         }
 
         function selectSeat(seatElement) {
@@ -331,6 +254,7 @@
             document.getElementById('success-message').classList.add('hidden');
         }
 
+        // Confirma e salva direto na Nuvem
         function confirmarReserva() {
             const nome = document.getElementById('nome').value;
             const rg = document.getElementById('rg').value;
@@ -342,37 +266,24 @@
                 return;
             }
 
-            const assentoNum = parseInt(selectedSeat);
-            occupiedSeats.push(assentoNum);
-            passengersData[assentoNum] = { nome: nome, rg: rg, email: email, telefone: telefone };
+            const assentoNum = selectedSeat;
+            const reserva = { nome: nome, rg: rg, email: email, telefone: telefone };
 
-            salvarDados(); 
-            initBus(); 
-
-            document.getElementById('reservation-form-container').classList.add('hidden');
-            document.getElementById('nome').value = '';
-            document.getElementById('rg').value = '';
-            document.getElementById('email').value = '';
-            document.getElementById('telefone').value = '';
-
-            document.getElementById('success-message').classList.remove('hidden');
-            enviarEmail(nome, rg, email, telefone, assentoNum);
-        }
-
-        function enviarEmail(nome, rg, email, telefone, assento) {
-            const destinatario = "lucaswilianreis@gmail.com";
-            const assunto = encodeURIComponent(`Nova Reserva de Ônibus - Assento ${assento}`);
-            const corpo = encodeURIComponent(
-                `Nova reserva efetuada no sistema.\n\n` +
-                `Assento: ${assento}\n` +
-                `Nome: ${nome}\n` +
-                `RG: ${rg}\n` +
-                `E-mail: ${email}\n` +
-                `Telefone: ${telefone}`
-            );
-            
-            // CORREÇÃO: Abre direto o App nativo de E-mail do celular (Gmail, Mail, Outlook, etc)
-            window.location.href = `mailto:${destinatario}?subject=${assunto}&body=${corpo}`;
+            // Salva no Firebase
+            db.ref('reservas/' + assentoNum).set(reserva).then(() => {
+                document.getElementById('reservation-form-container').classList.add('hidden');
+                document.getElementById('success-message').classList.remove('hidden');
+                
+                // Abre o WhatsApp com mensagem pré-pronta
+                const texto = encodeURIComponent(`🔴⚪ Olá! Fiz minha reserva no ônibus do Colorado.\n\n*Poltrona:* ${assentoNum}\n*Nome:* ${nome}\n*RG:* ${rg}`);
+                window.open(`https://wa.me/${MEU_WHATSAPP}?text=${texto}`, '_blank');
+                
+                // Limpa campos
+                document.getElementById('nome').value = '';
+                document.getElementById('rg').value = '';
+                document.getElementById('email').value = '';
+                document.getElementById('telefone').value = '';
+            });
         }
 
         let isAdmin = false;
@@ -385,12 +296,11 @@
                     return;
                 }
             }
-            
             isAdmin = !isAdmin;
-            
             if(isAdmin) {
                 document.getElementById('user-panel').classList.add('hidden');
                 document.getElementById('admin-panel').classList.remove('hidden');
+                atualizarListaAdmin();
             } else {
                 document.getElementById('admin-panel').classList.add('hidden');
                 document.getElementById('user-panel').classList.remove('hidden');
@@ -398,30 +308,18 @@
         }
 
         function atualizarViagem() {
-            infoViagem.data = document.getElementById('admin-date').value;
-            infoViagem.horario = document.getElementById('admin-time').value;
-            
-            document.getElementById('display-date').textContent = infoViagem.data;
-            document.getElementById('display-time').textContent = infoViagem.horario;
-            
-            salvarDados(); 
-            alert("Informações atualizadas com sucesso!");
+            const novaData = document.getElementById('admin-date').value;
+            const novoHorario = document.getElementById('admin-time').value;
+            // Salva a nova viagem no Firebase
+            db.ref('infoViagem').set({ data: novaData, horario: novoHorario }).then(() => {
+                alert("Informações atualizadas com sucesso para todos!");
+            });
         }
 
         function excluirReserva(assento) {
-            if (confirm(`Remover poltrona ${assento}?`)) {
-                occupiedSeats = occupiedSeats.filter(s => s !== parseInt(assento));
-                delete passengersData[assento];
-                
-                salvarDados();
-                initBus();
-            }
-        }
-
-        function limparTudo() {
-            if (confirm(`ATENÇÃO! Isso apagará todos os testes salvos no SEU navegador. Deseja continuar?`)) {
-                localStorage.clear();
-                location.reload(); 
+            if (confirm(`Remover o passageiro da poltrona ${assento}? O lugar ficará livre para todos imediatamente.`)) {
+                // Apaga o assento do Firebase
+                db.ref('reservas/' + assento).remove();
             }
         }
 
@@ -430,10 +328,12 @@
             const metaContainer = document.getElementById('meta-container');
             lista.innerHTML = '';
             
-            let count = occupiedSeats.length;
-            const assentosOcupados = [...occupiedSeats].sort((a,b) => a - b);
+            // Pega os assentos do objeto e os ordena numericamente
+            const assentosOcupados = Object.keys(passengersData).map(Number).sort((a,b) => a - b);
+            let count = assentosOcupados.length;
 
             assentosOcupados.forEach(i => {
+                const data = passengersData[i];
                 const li = document.createElement('li');
                 li.style.background = 'rgba(0,0,0,0.3)';
                 li.style.margin = '5px 0';
@@ -443,16 +343,12 @@
                 li.style.justifyContent = 'space-between';
                 li.style.alignItems = 'center';
                 
-                const data = passengersData[i] || {nome: "Sem Nome", rg: "-", email: "-", telefone: "-"};
-                
-                // CORREÇÃO: Adicionadas todas as informações de contato no painel
                 li.innerHTML = `
                     <div style="flex: 1; margin-right: 10px; line-height: 1.4;">
                         <strong style="font-size: 1.1em; color: #ffcccc;">Poltrona ${i}</strong><br>
                         <span style="font-size: 13px;">
                             <strong>Nome:</strong> ${data.nome} <br>
                             <strong>RG:</strong> ${data.rg} <br>
-                            <strong>E-mail:</strong> ${data.email} <br>
                             <strong>Whats:</strong> ${data.telefone}
                         </span>
                     </div>
@@ -471,16 +367,15 @@
 
             let faltam = metaPassageiros - count;
             if (faltam > 0) {
-                metaContainer.style.color = "#ffcccc";
-                metaContainer.style.border = "1px solid #ff4444";
+                metaContainer.style.color = "#ffcccc"; metaContainer.style.border = "1px solid #ff4444";
                 metaContainer.innerHTML = `⚠️ Faltam ${faltam} pessoas para cobrir o custo (Meta: ${metaPassageiros})`;
             } else {
-                metaContainer.style.color = "#4CAF50";
-                metaContainer.style.border = "1px solid #4CAF50";
-                metaContainer.innerHTML = `✅ Custo coberto! (Passamos em ${count - metaPassageiros} da meta de ${metaPassageiros})`;
+                metaContainer.style.color = "#4CAF50"; metaContainer.style.border = "1px solid #4CAF50";
+                metaContainer.innerHTML = `✅ Custo coberto! (Passamos em ${count - metaPassageiros} da meta)`;
             }
         }
 
+        // Inicializa conectando ao banco de dados
         window.onload = initApp;
     </script>
 </body>
