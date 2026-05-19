@@ -9,9 +9,10 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
     <style>
-        /* Estética em Vermelho e Branco baseada na tabela de ingressos */
+        /* Estética com a marca d'água da torcida e paleta vermelha */
         body {
-            background: linear-gradient(135deg, #e60000 0%, #800000 100%);
+            /* Mescla a cor vermelha com a imagem fundo.jpg para criar a transparência */
+            background: linear-gradient(rgba(230, 0, 0, 0.85), rgba(100, 0, 0, 0.95)), url('fundo.jpg') center/cover no-repeat fixed;
             color: #ffffff;
             font-family: 'Arial', sans-serif;
             margin: 0;
@@ -25,60 +26,102 @@
             display: flex; flex-wrap: wrap; gap: 40px; max-width: 1000px; width: 100%;
         }
 
+        /* Efeito de vidro fosco para destacar o painel da imagem de fundo */
         .info-panel {
-            flex: 1; min-width: 300px; background: rgba(255, 255, 255, 0.1);
-            padding: 20px; border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            flex: 1; min-width: 300px; background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            padding: 25px; border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
         }
 
-        h1, h2, h3 { text-transform: uppercase; text-align: center; border-bottom: 2px solid rgba(255, 255, 255, 0.3); padding-bottom: 10px; }
+        h1, h2, h3 { text-transform: uppercase; text-align: center; border-bottom: 2px solid rgba(255, 255, 255, 0.3); padding-bottom: 10px; margin-top: 0;}
 
-        /* Layout do Ônibus - 42 lugares com corredor central */
+        /* Estética realista do ônibus (texturas metálicas e piso) */
         .bus-layout {
-            background: rgba(0, 0, 0, 0.2); border: 2px solid #ffffff; border-radius: 30px;
-            padding: 30px 20px; display: grid; grid-template-columns: 1fr 1fr 0.5fr 1fr 1fr;
-            gap: 10px; margin-top: 20px; position: relative;
+            background: linear-gradient(to bottom, #4a4a4a, #2a2a2a);
+            border: 4px solid #b0b0b0; 
+            border-radius: 40px; 
+            padding: 40px 25px; 
+            display: grid; 
+            grid-template-columns: 1fr 1fr 0.6fr 1fr 1fr; 
+            gap: 12px; margin-top: 20px; position: relative;
+            box-shadow: inset 0 0 25px rgba(0,0,0,0.9), 0 10px 20px rgba(0,0,0,0.5);
         }
 
         .driver-area {
-            grid-column: 1 / span 5; height: 40px; border-bottom: 2px dashed rgba(255,255,255,0.5);
-            margin-bottom: 20px; text-align: right; padding-right: 20px; font-size: 0.8em; color: #ccc;
+            grid-column: 1 / span 5; height: 50px; 
+            border-bottom: 3px solid rgba(255,255,255,0.1);
+            margin-bottom: 25px; text-align: right; padding-right: 20px; font-size: 0.9em; color: #888;
+            background: rgba(0,0,0,0.4); border-radius: 10px 10px 0 0;
+            display: flex; align-items: center; justify-content: flex-end;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
         }
 
+        /* Poltronas realistas com formato e profundidade 3D */
         .seat {
-            background-color: #ffffff; color: #cc0000; padding: 10px 0; text-align: center;
-            border-radius: 5px; font-weight: bold; cursor: pointer; transition: all 0.2s; border: 2px solid transparent;
+            background: linear-gradient(145deg, #ffffff, #dcdcdc);
+            color: #cc0000; padding: 15px 0; text-align: center;
+            border-radius: 10px 10px 5px 5px; 
+            font-weight: bold; cursor: pointer; transition: all 0.2s ease-in-out; 
+            border: 1px solid #999;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.4), inset 0 2px 2px rgba(255,255,255,1);
+            position: relative;
         }
 
-        .seat:hover:not(.occupied) { transform: scale(1.1); background-color: #ffcccc; }
+        /* Encosto de cabeça da poltrona */
+        .seat::before {
+            content: ''; position: absolute;
+            top: -4px; left: 10%; width: 80%; height: 8px;
+            background: inherit; border-radius: 5px 5px 0 0;
+            border-top: 1px solid #aaa;
+        }
 
-        .seat.occupied { background-color: #333333; color: #999999; cursor: not-allowed; border: 2px solid #111; }
+        .seat:hover:not(.occupied) { 
+            transform: translateY(-3px) scale(1.05); 
+            background: linear-gradient(145deg, #ffcccc, #ff9999);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.5), inset 0 2px 2px rgba(255,255,255,0.8);
+        }
 
-        .seat.selected { background-color: #ffeb3b; color: #000; border: 2px solid #fff; transform: scale(1.1); }
+        .seat.occupied { 
+            background: linear-gradient(145deg, #444, #1a1a1a); 
+            color: #777; cursor: not-allowed; border: 1px solid #000; 
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.9);
+        }
 
+        .seat.selected { 
+            background: linear-gradient(145deg, #ffeb3b, #fbc02d); 
+            color: #000; border: 1px solid #d4a100; 
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.5), inset 0 2px 2px rgba(255,255,255,0.8);
+        }
+
+        /* Formulários e botões */
         .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #eee; }
         
         input {
-            width: 100%; padding: 10px; border: none; border-radius: 5px; box-sizing: border-box;
-            background: rgba(255,255,255,0.9); color: #333;
+            width: 100%; padding: 12px; border: none; border-radius: 5px; box-sizing: border-box;
+            background: rgba(255,255,255,0.95); color: #333; font-size: 14px;
         }
 
         button {
-            width: 100%; padding: 15px; background-color: #ffffff; color: #cc0000;
-            border: none; border-radius: 5px; font-size: 16px; font-weight: bold;
+            width: 100%; padding: 15px; background: linear-gradient(to bottom, #ffffff, #e6e6e6); 
+            color: #cc0000; border: none; border-radius: 5px; font-size: 16px; font-weight: bold;
             cursor: pointer; text-transform: uppercase; transition: 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
-        button:hover { background-color: #ffcccc; }
+        button:hover { background: linear-gradient(to bottom, #ffcccc, #ff9999); transform: translateY(-2px); }
 
-        .btn-delete { background-color: #ff4444; color: white; padding: 5px 10px; font-size: 12px; border-radius: 3px; width: auto; margin-left: 10px; }
-        .hidden { display: none; }
-        .success-msg { background-color: #4CAF50; color: white; padding: 15px; border-radius: 5px; text-align: center; margin-top: 15px; }
-        .admin-toggle { position: absolute; top: 10px; right: 10px; background: transparent; border: 1px solid white; color: white; padding: 5px 10px; font-size: 12px; }
-        .meta-aviso { background-color: rgba(0,0,0,0.5); padding: 15px; border-radius: 5px; text-align: center; font-weight: bold; margin-bottom: 15px; }
+        .btn-delete { background: #ff4444; color: white; padding: 6px 12px; font-size: 12px; border-radius: 3px; width: auto; margin-left: 10px; border: none;}
+        .btn-delete:hover { background: #cc0000; }
         
-        /* Mensagem de Erro do Banco de Dados */
+        .hidden { display: none; }
+        .success-msg { background-color: rgba(76, 175, 80, 0.9); color: white; padding: 15px; border-radius: 5px; text-align: center; margin-top: 15px; font-size: 15px; border: 1px solid #388E3C;}
+        .admin-toggle { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px 15px; font-size: 12px; border-radius: 5px; backdrop-filter: blur(5px);}
+        .admin-toggle:hover { background: rgba(0,0,0,0.7); }
+        .meta-aviso { background-color: rgba(0,0,0,0.4); padding: 15px; border-radius: 5px; text-align: center; font-weight: bold; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1);}
+        
         #erro-conexao { background: #ff4444; padding: 15px; text-align: center; border-radius: 5px; margin-bottom: 15px; font-weight: bold; display: none;}
     </style>
 </head>
@@ -90,10 +133,10 @@
         <!-- Mapa do Ônibus -->
         <div class="info-panel">
             <h2>Selecione seu Lugar</h2>
-            <p>Assentos escuros estão ocupados.</p>
+            <p style="text-align: center; font-size: 14px; color: #ccc;">Assentos escuros estão ocupados.</p>
             <div id="erro-conexao">Erro: Banco de Dados não encontrado! Verifique o Firebase.</div>
             <div class="bus-layout" id="bus">
-                <div class="driver-area">Motorista</div>
+                <div class="driver-area">Área do Motorista</div>
                 <!-- Os assentos carregarão aqui -->
             </div>
         </div>
@@ -108,8 +151,8 @@
                 <p><strong>Saída:</strong> <span id="display-time">Carregando...</span></p>
 
                 <div id="reservation-form-container" class="hidden">
-                    <hr style="border-color: rgba(255,255,255,0.2); margin: 20px 0;">
-                    <h3>Reservar Assento: <span id="selected-seat-number"></span></h3>
+                    <hr style="border-color: rgba(255,255,255,0.1); margin: 25px 0;">
+                    <h3>Reservar Assento: <span id="selected-seat-number" style="color: #ffeb3b;"></span></h3>
                     
                     <div class="form-group">
                         <label for="nome">Nome Completo:</label>
@@ -127,20 +170,20 @@
                         <label for="telefone">Telefone (WhatsApp):</label>
                         <input type="text" id="telefone" required>
                     </div>
-                    <button onclick="confirmarReserva()">Confirmar Reserva e Abrir WhatsApp</button>
+                    <button onclick="confirmarReserva()" style="margin-top: 10px;">Confirmar Reserva</button>
                 </div>
                 
                 <div id="success-message" class="success-msg hidden">
                     Reserva confirmada no sistema!<br><br>
                     <strong>Se o WhatsApp não abrir automaticamente:</strong><br>
-                    <a id="btn-whats-manual" href="#" target="_blank" style="color: #ffeb3b; font-weight: bold; text-decoration: underline; display: inline-block; margin-top: 10px;">Clique aqui para enviar a mensagem</a>
+                    <a id="btn-whats-manual" href="#" target="_blank" style="color: #fff; font-weight: bold; text-decoration: underline; display: inline-block; margin-top: 10px; background: #25D366; padding: 8px 15px; border-radius: 5px;">Clique aqui para enviar a mensagem</a>
                 </div>
             </div>
 
             <!-- Painel do Administrador -->
             <div id="admin-panel" class="hidden">
                 <h1>Painel do Responsável</h1>
-                <button onclick="toggleAdmin()" style="background: #333; color: white; padding: 10px; margin-bottom: 15px;">Sair do Admin</button>
+                <button onclick="toggleAdmin()" style="background: rgba(0,0,0,0.5); color: white; padding: 10px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.2); box-shadow: none;">Sair do Admin</button>
                 
                 <h3>Atualizar Viagem</h3>
                 <div class="form-group">
@@ -153,7 +196,7 @@
                 </div>
                 <button onclick="atualizarViagem()">Atualizar Informações</button>
 
-                <hr style="border-color: rgba(255,255,255,0.2); margin: 20px 0;">
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 25px 0;">
                 
                 <h3>Passageiros Confirmados (<span id="count-ocupados">0</span>/42)</h3>
                 
@@ -168,7 +211,7 @@
 
     <script>
         // =================================================================
-        // DADOS CONFIGURADOS (Firebase com URL corrigida e WhatsAtualizado)
+        // DADOS CONFIGURADOS INTACTOS
         // =================================================================
         const MEU_WHATSAPP = "55054991845772"; 
 
@@ -183,7 +226,6 @@
         };
         // =================================================================
 
-        // Inicializa o Firebase
         try {
             firebase.initializeApp(firebaseConfig);
         } catch (error) {
@@ -197,22 +239,18 @@
         let selectedSeat = null;
         let passengersData = {};
         
-        // Desenhar o ônibus vazio logo ao abrir
         initBus();
 
-        // Monitora o Banco de Dados em Tempo Real
         function initApp() {
-            // Monitora os assentos ocupados
             db.ref('reservas').on('value', (snapshot) => {
                 passengersData = snapshot.val() || {};
-                initBus(); // Atualiza o visual
+                initBus(); 
                 if (isAdmin) atualizarListaAdmin();
             }, (error) => {
                 document.getElementById('erro-conexao').style.display = 'block';
                 console.error("Erro no Banco de Dados", error);
             });
 
-            // Monitora informações da viagem
             db.ref('infoViagem').on('value', (snapshot) => {
                 const info = snapshot.val() || { data: "Definir", horario: "Definir" };
                 document.getElementById('display-date').textContent = info.data;
@@ -222,10 +260,9 @@
             });
         }
 
-        // Desenha o mapa do ônibus
         function initBus() {
             const busDiv = document.getElementById('bus');
-            busDiv.innerHTML = '<div class="driver-area">Motorista</div>';
+            busDiv.innerHTML = '<div class="driver-area">Painel do Motorista</div>';
             let seatNumber = 1;
 
             for (let row = 0; row < 11; row++) {
@@ -242,7 +279,6 @@
                         seat.textContent = seatNumber < 10 ? '0'+seatNumber : seatNumber;
                         seat.dataset.number = seatNumber;
 
-                        // Se o assento estiver no banco de dados, fica bloqueado
                         if (passengersData[seatNumber]) {
                             seat.classList.add('occupied');
                         } else {
@@ -268,7 +304,6 @@
             document.getElementById('success-message').classList.add('hidden');
         }
 
-        // Confirma e salva direto na Nuvem
         function confirmarReserva() {
             const nome = document.getElementById('nome').value;
             const rg = document.getElementById('rg').value;
@@ -283,23 +318,16 @@
             const assentoNum = selectedSeat;
             const reserva = { nome: nome, rg: rg, email: email, telefone: telefone };
 
-            // TEXTO LIMPO: Sem emojis, sem asteriscos
             const texto = encodeURIComponent(`Olá! Fiz minha reserva no ônibus do Colorado.\n\nPoltrona: ${assentoNum}\nNome: ${nome}\nRG: ${rg}`);
             const linkWhats = `https://wa.me/${MEU_WHATSAPP}?text=${texto}`;
             
-            // 1. Atualiza o botão manual de segurança (Fallback)
             document.getElementById('btn-whats-manual').href = linkWhats;
-            
-            // 2. Tenta abrir o WhatsApp imediatamente ao clicar (Isso evita o bloqueador do PC)
             window.open(linkWhats, '_blank');
 
-            // 3. Salva no Firebase simultaneamente
             db.ref('reservas/' + assentoNum).set(reserva).then(() => {
-                // Esconde o formulário e mostra a mensagem de sucesso com o link manual
                 document.getElementById('reservation-form-container').classList.add('hidden');
                 document.getElementById('success-message').classList.remove('hidden');
                 
-                // Limpa campos
                 document.getElementById('nome').value = '';
                 document.getElementById('rg').value = '';
                 document.getElementById('email').value = '';
@@ -356,18 +384,19 @@
             assentosOcupados.forEach(i => {
                 const data = passengersData[i];
                 const li = document.createElement('li');
-                li.style.background = 'rgba(0,0,0,0.3)';
+                li.style.background = 'rgba(0,0,0,0.5)';
                 li.style.margin = '5px 0';
                 li.style.padding = '15px 10px';
                 li.style.borderRadius = '5px';
                 li.style.display = 'flex';
                 li.style.justifyContent = 'space-between';
                 li.style.alignItems = 'center';
+                li.style.border = '1px solid rgba(255,255,255,0.1)';
                 
                 li.innerHTML = `
                     <div style="flex: 1; margin-right: 10px; line-height: 1.4;">
                         <strong style="font-size: 1.1em; color: #ffcccc;">Poltrona ${i}</strong><br>
-                        <span style="font-size: 13px;">
+                        <span style="font-size: 13px; color: #eee;">
                             <strong>Nome:</strong> ${data.nome} <br>
                             <strong>RG:</strong> ${data.rg} <br>
                             <strong>Whats:</strong> ${data.telefone}
@@ -396,7 +425,6 @@
             }
         }
 
-        // Inicia a comunicação com o Firebase
         window.onload = initApp;
     </script>
 </body>
