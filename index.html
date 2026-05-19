@@ -214,11 +214,11 @@
                         <label for="telefone">Telefone (WhatsApp):</label>
                         <input type="text" id="telefone" required>
                     </div>
-                    <button onclick="confirmarReserva()">Confirmar Reserva</button>
+                    <button onclick="confirmarReserva()">Confirmar Reserva e Enviar E-mail</button>
                 </div>
                 
                 <div id="success-message" class="success-msg hidden">
-                    Reserva salva no seu navegador! Você será redirecionado para o Gmail para enviar os dados.
+                    O aplicativo de e-mail do seu celular será aberto para o envio dos dados!
                 </div>
             </div>
 
@@ -242,28 +242,33 @@
                 
                 <h3>Passageiros Confirmados (<span id="count-ocupados">0</span>/42)</h3>
                 
-                <!-- DÚVIDA 3: Contador de meta -->
                 <div id="meta-container" class="meta-aviso"></div>
 
-                <ul id="lista-passageiros" style="list-style: none; padding: 0; max-height: 300px; overflow-y: auto;">
+                <ul id="lista-passageiros" style="list-style: none; padding: 0; max-height: 400px; overflow-y: auto;">
                     <!-- Preenchido via JS -->
                 </ul>
-                <button onclick="limparTudo()" style="background: #550000; font-size: 12px; padding: 10px; margin-top: 15px;">Resetar todos os dados do sistema</button>
+                <button onclick="limparTudo()" style="background: #550000; font-size: 12px; padding: 10px; margin-top: 15px;">Resetar todos os dados salvos localmente</button>
             </div>
         </div>
     </div>
 
     <script>
         const totalSeats = 42;
-        const metaPassageiros = 37; // Meta para evitar prejuízo
+        const metaPassageiros = 37;
         let selectedSeat = null;
         
-        // DÚVIDA 1: Carrega os dados salvos do navegador ou usa os padrões da imagem de referência
-        let occupiedSeats = JSON.parse(localStorage.getItem('occupiedSeats')) || [1, 2];
+        /* 
+           ATENÇÃO ADMIN: Para bloquear uma poltrona permanentemente para todos os torcedores, 
+           adicione o número dela dentro dos colchetes abaixo, separados por vírgula, 
+           diretamente lá no arquivo do GitHub! 
+           Exemplo: [1, 2] 
+        */
+        const assentosBloqueadosNoGitHub = [1, 2];
+
+        let occupiedSeats = JSON.parse(localStorage.getItem('occupiedSeats')) || assentosBloqueadosNoGitHub;
         let passengersData = JSON.parse(localStorage.getItem('passengersData')) || {};
         let infoViagem = JSON.parse(localStorage.getItem('infoViagem')) || { data: "10/01/2026", horario: "14:00" };
 
-        // Função para salvar no navegador
         function salvarDados() {
             localStorage.setItem('occupiedSeats', JSON.stringify(occupiedSeats));
             localStorage.setItem('passengersData', JSON.stringify(passengersData));
@@ -271,18 +276,16 @@
         }
 
         function initApp() {
-            // Inicializa as informações da viagem
             document.getElementById('display-date').textContent = infoViagem.data;
             document.getElementById('display-time').textContent = infoViagem.horario;
             document.getElementById('admin-date').value = infoViagem.data;
             document.getElementById('admin-time').value = infoViagem.horario;
-
             initBus();
         }
 
         function initBus() {
             const busDiv = document.getElementById('bus');
-            busDiv.innerHTML = '<div class="driver-area">Motorista</div>'; // Reseta o ônibus
+            busDiv.innerHTML = '<div class="driver-area">Motorista</div>';
             let seatNumber = 1;
 
             for (let row = 0; row < 11; row++) {
@@ -302,7 +305,7 @@
                         if (occupiedSeats.includes(seatNumber)) {
                             seat.classList.add('occupied');
                             if(!passengersData[seatNumber]) {
-                                passengersData[seatNumber] = { nome: "Torcedor Cadastrado", rg: "XXX.XXX" };
+                                passengersData[seatNumber] = { nome: "Poltrona Bloqueada", rg: "-", email: "-", telefone: "-" };
                             }
                         } else {
                             seat.onclick = () => selectSeat(seat);
@@ -343,7 +346,7 @@
             occupiedSeats.push(assentoNum);
             passengersData[assentoNum] = { nome: nome, rg: rg, email: email, telefone: telefone };
 
-            salvarDados(); // Salva no navegador
+            salvarDados(); 
             initBus(); 
 
             document.getElementById('reservation-form-container').classList.add('hidden');
@@ -367,11 +370,11 @@
                 `E-mail: ${email}\n` +
                 `Telefone: ${telefone}`
             );
-            const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${destinatario}&su=${assunto}&body=${corpo}`;
-            window.open(gmailUrl, '_blank');
+            
+            // CORREÇÃO: Abre direto o App nativo de E-mail do celular (Gmail, Mail, Outlook, etc)
+            window.location.href = `mailto:${destinatario}?subject=${assunto}&body=${corpo}`;
         }
 
-        // --- MODO ADMIN ---
         let isAdmin = false;
         
         function toggleAdmin() {
@@ -401,24 +404,24 @@
             document.getElementById('display-date').textContent = infoViagem.data;
             document.getElementById('display-time').textContent = infoViagem.horario;
             
-            salvarDados(); // Salva no navegador
+            salvarDados(); 
             alert("Informações atualizadas com sucesso!");
         }
 
         function excluirReserva(assento) {
-            if (confirm(`Tem certeza que deseja remover o passageiro da poltrona ${assento}? O lugar ficará livre novamente.`)) {
+            if (confirm(`Remover poltrona ${assento}?`)) {
                 occupiedSeats = occupiedSeats.filter(s => s !== parseInt(assento));
                 delete passengersData[assento];
                 
-                salvarDados(); // Atualiza salvamento
+                salvarDados();
                 initBus();
             }
         }
 
         function limparTudo() {
-            if (confirm(`ATENÇÃO! Isso apagará TODOS os dados, reservas e configurações salvas no seu navegador. Deseja continuar?`)) {
+            if (confirm(`ATENÇÃO! Isso apagará todos os testes salvos no SEU navegador. Deseja continuar?`)) {
                 localStorage.clear();
-                location.reload(); // Recarrega a página para estado original
+                location.reload(); 
             }
         }
 
@@ -434,14 +437,26 @@
                 const li = document.createElement('li');
                 li.style.background = 'rgba(0,0,0,0.3)';
                 li.style.margin = '5px 0';
-                li.style.padding = '10px';
+                li.style.padding = '15px 10px';
                 li.style.borderRadius = '5px';
                 li.style.display = 'flex';
                 li.style.justifyContent = 'space-between';
                 li.style.alignItems = 'center';
                 
-                const data = passengersData[i] || {nome: "Sem Nome", rg: "N/A"};
-                li.innerHTML = `<span><strong>Poltrona ${i}:</strong> ${data.nome} (RG: ${data.rg})</span>`;
+                const data = passengersData[i] || {nome: "Sem Nome", rg: "-", email: "-", telefone: "-"};
+                
+                // CORREÇÃO: Adicionadas todas as informações de contato no painel
+                li.innerHTML = `
+                    <div style="flex: 1; margin-right: 10px; line-height: 1.4;">
+                        <strong style="font-size: 1.1em; color: #ffcccc;">Poltrona ${i}</strong><br>
+                        <span style="font-size: 13px;">
+                            <strong>Nome:</strong> ${data.nome} <br>
+                            <strong>RG:</strong> ${data.rg} <br>
+                            <strong>E-mail:</strong> ${data.email} <br>
+                            <strong>Whats:</strong> ${data.telefone}
+                        </span>
+                    </div>
+                `;
                 
                 const btnExcluir = document.createElement('button');
                 btnExcluir.className = 'btn-delete';
@@ -454,7 +469,6 @@
 
             document.getElementById('count-ocupados').textContent = count;
 
-            // DÚVIDA 3: Lógica do Contador de Prejuízo
             let faltam = metaPassageiros - count;
             if (faltam > 0) {
                 metaContainer.style.color = "#ffcccc";
@@ -467,7 +481,6 @@
             }
         }
 
-        // Inicializa o app ao carregar
         window.onload = initApp;
     </script>
 </body>
