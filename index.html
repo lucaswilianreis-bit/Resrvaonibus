@@ -166,14 +166,14 @@
 
     <script>
         // =================================================================
-        // DADOS CORRIGIDOS COM A DATABASE URL
+        // DADOS CONFIGURADOS (Firebase com URL corrigida e WhatsAtualizado)
         // =================================================================
         const MEU_WHATSAPP = "55054991845772"; 
 
         const firebaseConfig = {
             apiKey: "AIzaSyBRD5uK4VDaeGYFvopumn-Uut15szzoxN4",
             authDomain: "reserva-onibus-colorado-5bc36.firebaseapp.com",
-            databaseURL: "https://reserva-onibus-colorado-5bc36-default-rtdb.firebaseio.com", // LINHA ADICIONADA PARA CORRIGIR O ERRO
+            databaseURL: "https://reserva-onibus-colorado-5bc36-default-rtdb.firebaseio.com",
             projectId: "reserva-onibus-colorado-5bc36",
             storageBucket: "reserva-onibus-colorado-5bc36.firebasestorage.app",
             messagingSenderId: "530727428028",
@@ -195,7 +195,7 @@
         let selectedSeat = null;
         let passengersData = {};
         
-        // Função para desenhar o ônibus logo ao abrir a página (evita ficar em branco)
+        // Desenhar o ônibus vazio logo ao abrir
         initBus();
 
         // Monitora o Banco de Dados em Tempo Real
@@ -207,7 +207,7 @@
                 if (isAdmin) atualizarListaAdmin();
             }, (error) => {
                 document.getElementById('erro-conexao').style.display = 'block';
-                console.error("Erro no Banco de Dados: O 'Realtime Database' foi criado no Firebase no modo teste?", error);
+                console.error("Erro no Banco de Dados", error);
             });
 
             // Monitora informações da viagem
@@ -286,8 +286,14 @@
                 document.getElementById('reservation-form-container').classList.add('hidden');
                 document.getElementById('success-message').classList.remove('hidden');
                 
-                // Abre o WhatsApp com mensagem pré-pronta
-                const texto = "%F0%9F%94%B4%E2%9A%AA" + encodeURIComponent(` Olá! Fiz minha reserva no ônibus do Colorado.\n\n*Poltrona:* ${assentoNum}\n*Nome:* ${nome}\n*RG:* ${rg}`);
+                // Código Unicode seguro para os emojis de bola vermelha e branca
+                const emojis = "\uD83D\uDD34\u26AA";
+                
+                // Texto limpo, sem asteriscos
+                const texto = encodeURIComponent(`${emojis} Olá! Fiz minha reserva no ônibus do Colorado.\n\nPoltrona: ${assentoNum}\nNome: ${nome}\nRG: ${rg}`);
+                
+                // CORREÇÃO PARA CELULAR: Usa window.location.href em vez de window.open
+                window.location.href = `https://wa.me/${MEU_WHATSAPP}?text=${texto}`;
                 
                 // Limpa campos
                 document.getElementById('nome').value = '';
