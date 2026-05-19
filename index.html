@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reserva de Ônibus - Torcida</title>
-    <!-- Adicionando as bibliotecas do Firebase -->
+    <!-- Bibliotecas do Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
     <style>
-        /* Estética em Vermelho e Branco */
+        /* Estética em Vermelho e Branco baseada na tabela de ingressos */
         body {
             background: linear-gradient(135deg, #e60000 0%, #800000 100%);
             color: #ffffff;
@@ -33,7 +33,7 @@
 
         h1, h2, h3 { text-transform: uppercase; text-align: center; border-bottom: 2px solid rgba(255, 255, 255, 0.3); padding-bottom: 10px; }
 
-        /* Layout do Ônibus - 42 lugares */
+        /* Layout do Ônibus - 42 lugares com corredor central */
         .bus-layout {
             background: rgba(0, 0, 0, 0.2); border: 2px solid #ffffff; border-radius: 30px;
             padding: 30px 20px; display: grid; grid-template-columns: 1fr 1fr 0.5fr 1fr 1fr;
@@ -77,6 +77,9 @@
         .success-msg { background-color: #4CAF50; color: white; padding: 15px; border-radius: 5px; text-align: center; margin-top: 15px; }
         .admin-toggle { position: absolute; top: 10px; right: 10px; background: transparent; border: 1px solid white; color: white; padding: 5px 10px; font-size: 12px; }
         .meta-aviso { background-color: rgba(0,0,0,0.5); padding: 15px; border-radius: 5px; text-align: center; font-weight: bold; margin-bottom: 15px; }
+        
+        /* Mensagem de Erro do Banco de Dados */
+        #erro-conexao { background: #ff4444; padding: 15px; text-align: center; border-radius: 5px; margin-bottom: 15px; font-weight: bold; display: none;}
     </style>
 </head>
 <body>
@@ -88,8 +91,10 @@
         <div class="info-panel">
             <h2>Selecione seu Lugar</h2>
             <p>Assentos escuros estão ocupados.</p>
+            <div id="erro-conexao">Erro: Banco de Dados não encontrado! Verifique o Firebase.</div>
             <div class="bus-layout" id="bus">
                 <div class="driver-area">Motorista</div>
+                <!-- Os assentos carregarão aqui -->
             </div>
         </div>
 
@@ -161,27 +166,28 @@
 
     <script>
         // =================================================================
-        // 1. INSIRA SEUS DADOS AQUI!
+        // DADOS CORRIGIDOS COM A DATABASE URL
         // =================================================================
-        
-        // Coloque aqui o número do SEU WhatsApp que vai receber as mensagens
-        // Deve ter o 55 (Brasil), o DDD, e o número. Apenas números!
         const MEU_WHATSAPP = "55054991845772"; 
 
-        // Copie as informações do firebaseConfig gerado lá no Passo 1 e cole aqui:
         const firebaseConfig = {
-    apiKey: "AIzaSyBRD5uK4VDaeGYFvopumn-Uut15szzoxN4",
-    authDomain: "reserva-onibus-colorado-5bc36.firebaseapp.com",
-    projectId: "reserva-onibus-colorado-5bc36",
-    storageBucket: "reserva-onibus-colorado-5bc36.firebasestorage.app",
-    messagingSenderId: "530727428028",
-    appId: "1:530727428028:web:72828233a39708edc995b9"
-  };
-        
+            apiKey: "AIzaSyBRD5uK4VDaeGYFvopumn-Uut15szzoxN4",
+            authDomain: "reserva-onibus-colorado-5bc36.firebaseapp.com",
+            databaseURL: "https://reserva-onibus-colorado-5bc36-default-rtdb.firebaseio.com", // LINHA ADICIONADA PARA CORRIGIR O ERRO
+            projectId: "reserva-onibus-colorado-5bc36",
+            storageBucket: "reserva-onibus-colorado-5bc36.firebasestorage.app",
+            messagingSenderId: "530727428028",
+            appId: "1:530727428028:web:72828233a39708edc995b9"
+        };
         // =================================================================
 
         // Inicializa o Firebase
-        firebase.initializeApp(firebaseConfig);
+        try {
+            firebase.initializeApp(firebaseConfig);
+        } catch (error) {
+            console.error("Erro na inicialização do Firebase", error);
+        }
+        
         const db = firebase.database();
 
         const totalSeats = 42;
@@ -189,13 +195,19 @@
         let selectedSeat = null;
         let passengersData = {};
         
+        // Função para desenhar o ônibus logo ao abrir a página (evita ficar em branco)
+        initBus();
+
         // Monitora o Banco de Dados em Tempo Real
         function initApp() {
             // Monitora os assentos ocupados
             db.ref('reservas').on('value', (snapshot) => {
                 passengersData = snapshot.val() || {};
-                initBus(); // Recarrega o ônibus sempre que alguém reservar
+                initBus(); // Atualiza o visual
                 if (isAdmin) atualizarListaAdmin();
+            }, (error) => {
+                document.getElementById('erro-conexao').style.display = 'block';
+                console.error("Erro no Banco de Dados: O 'Realtime Database' foi criado no Firebase no modo teste?", error);
             });
 
             // Monitora informações da viagem
@@ -208,7 +220,7 @@
             });
         }
 
-        // Desenha o mapa do ônibus (42 lugares)
+        // Desenha o mapa do ônibus
         function initBus() {
             const busDiv = document.getElementById('bus');
             busDiv.innerHTML = '<div class="driver-area">Motorista</div>';
@@ -283,6 +295,9 @@
                 document.getElementById('rg').value = '';
                 document.getElementById('email').value = '';
                 document.getElementById('telefone').value = '';
+            }).catch((error) => {
+                alert("Erro ao salvar a reserva. Tente novamente.");
+                console.error(error);
             });
         }
 
@@ -310,7 +325,6 @@
         function atualizarViagem() {
             const novaData = document.getElementById('admin-date').value;
             const novoHorario = document.getElementById('admin-time').value;
-            // Salva a nova viagem no Firebase
             db.ref('infoViagem').set({ data: novaData, horario: novoHorario }).then(() => {
                 alert("Informações atualizadas com sucesso para todos!");
             });
@@ -318,7 +332,6 @@
 
         function excluirReserva(assento) {
             if (confirm(`Remover o passageiro da poltrona ${assento}? O lugar ficará livre para todos imediatamente.`)) {
-                // Apaga o assento do Firebase
                 db.ref('reservas/' + assento).remove();
             }
         }
@@ -328,7 +341,6 @@
             const metaContainer = document.getElementById('meta-container');
             lista.innerHTML = '';
             
-            // Pega os assentos do objeto e os ordena numericamente
             const assentosOcupados = Object.keys(passengersData).map(Number).sort((a,b) => a - b);
             let count = assentosOcupados.length;
 
@@ -375,7 +387,7 @@
             }
         }
 
-        // Inicializa conectando ao banco de dados
+        // Inicia a comunicação com o Firebase
         window.onload = initApp;
     </script>
 </body>
